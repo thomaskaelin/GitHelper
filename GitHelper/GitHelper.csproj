@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <ProjectGuid>3FAFC2A9-670D-4247-9669-DF4FC7837226</ProjectGuid>
+        <OutputType>Exe</OutputType>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup>
+        <StartupObject>GitHelper.Program</StartupObject>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="CliWrap" Version="3.6.4" />
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="Sharprompt" Version="2.4.5" />
+    </ItemGroup>
+</Project>
