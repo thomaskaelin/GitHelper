@@ -7,6 +7,9 @@ namespace GitHelper;
 
 public sealed class GitFlows
 {
+    private const string OriginPrefix = "origin/";
+    private const string ActiveBranchMarker = "* ";
+
     private readonly GitCliWrapper _gitCliWrapper;
 
     public GitFlows(string workingDirectory)
@@ -20,32 +23,40 @@ public sealed class GitFlows
         await RunAsync("pull");
     }
 
-    public async Task SwitchBranchAsync(string branch)
+    public async Task SwitchBranchAsync(string localBranch)
     {
-        await RunAsync("checkout", branch);
+        await RunAsync("checkout", localBranch);
     }
 
-    public async Task CreateBranchAsync(string branch)
+    public async Task CheckoutBranchAsync(string remoteBranch)
     {
-        await RunAsync("checkout", "-b", branch);
+        var localBranch = remoteBranch.Replace(OriginPrefix, string.Empty);
+
+        await RunAsync("checkout", "-b", localBranch, remoteBranch);
     }
 
-    public async Task DeleteBranchAsync(string branch)
+    public async Task CreateBranchAsync(string localBranch)
     {
-        await RunAsync("branch", "-D", branch);
+        await RunAsync("checkout", "-b", localBranch);
+    }
+
+    public async Task DeleteBranchAsync(string localBranch)
+    {
+        await RunAsync("branch", "-D", localBranch);
     }
 
     public async Task<IEnumerable<string>> GetLocalBranchesAsync()
     {
         var cliResult = await RunAsync(false, "branch");
+        var branches = ExtractBranches(cliResult);
 
-        var branches = cliResult
-            .StandardOutput
-            .ReplaceLineEndings()
-            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
-            .Select(b => b.Replace("* ", string.Empty))
-            .Select(b => b.Trim())
-            .Order();
+        return branches;
+    }
+
+    public async Task<IEnumerable<string>> GetRemoteBranchesAsync()
+    {
+        var cliResult = await RunAsync(false, "branch", "-r");
+        var branches = ExtractBranches(cliResult);
 
         return branches;
     }
@@ -61,4 +72,15 @@ public sealed class GitFlows
     }
 
     private Task<GitCliResult> RunAsync(params string[] arguments) => RunAsync(true, arguments);
+
+    private static IOrderedEnumerable<string> ExtractBranches(GitCliResult cliResult)
+    {
+        return cliResult
+            .StandardOutput
+            .ReplaceLineEndings()
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Select(b => b.Replace(ActiveBranchMarker, string.Empty))
+            .Select(b => b.Trim())
+            .Order();
+    }
 }

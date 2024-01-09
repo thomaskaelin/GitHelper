@@ -23,11 +23,12 @@ public class UserInteraction
 
     public async Task RunAsync()
     {
-        const string fetchAndPull = "Fetch & Pull";
-        const string switchBranch = "Switch branch";
-        const string createBranch = "Create branch";
-        const string deleteBranch = "Delete branch";
-        const string quit = "Quit";
+        const string fetchAndPull   = "Fetch & Pull";
+        const string switchBranch   = "Switch Branch";
+        const string checkoutBranch = "Checkout Branch";
+        const string createBranch   = "Create Branch";
+        const string deleteBranch   = "Delete Branch (locally)";
+        const string quit           = "Quit";
 
         var userSelection = Prompt.Select(
             "Select your action",
@@ -35,6 +36,7 @@ public class UserInteraction
             {
                 fetchAndPull,
                 switchBranch,
+                checkoutBranch,
                 createBranch,
                 deleteBranch,
                 quit
@@ -48,6 +50,10 @@ public class UserInteraction
 
             case switchBranch:
                 await SwitchBranchAsync();
+                break;
+
+            case checkoutBranch:
+                await CheckoutBranchAsync();
                 break;
 
             case createBranch:
@@ -70,16 +76,22 @@ public class UserInteraction
         await _gitFlows.FetchAndPullAsync();
     }
 
-    private async Task CreateBranchAsync()
-    {
-        var name = Prompt.Input<string>("Name of the branch");
-        await _gitFlows.CreateBranchAsync(name);
-    }
-
     private async Task SwitchBranchAsync()
     {
         var name = await AskUserToSelectLocalBranchAsync();
         await _gitFlows.SwitchBranchAsync(name);
+    }
+
+    private async Task CheckoutBranchAsync()
+    {
+        var name = await AskUserToSelectRemoteBranchAsync();
+        await _gitFlows.CheckoutBranchAsync(name);
+    }
+
+    private async Task CreateBranchAsync()
+    {
+        var name = Prompt.Input<string>("Name of the branch");
+        await _gitFlows.CreateBranchAsync(name);
     }
 
     private async Task DeleteBranchAsync()
@@ -91,6 +103,14 @@ public class UserInteraction
     private async Task<string> AskUserToSelectLocalBranchAsync()
     {
         var branches = await _gitFlows.GetLocalBranchesAsync();
+        var userSelection = Prompt.Select("Select branch", branches);
+
+        return userSelection;
+    }
+
+    private async Task<string> AskUserToSelectRemoteBranchAsync()
+    {
+        var branches = await _gitFlows.GetRemoteBranchesAsync();
         var userSelection = Prompt.Select("Select branch", branches);
 
         return userSelection;
