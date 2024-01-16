@@ -7,7 +7,8 @@ namespace GitHelper;
 
 public sealed class GitFlows
 {
-    private const string OriginPrefix = "origin/";
+    private const string RemoteName = "origin";
+    private const string RemotePrefix = $"{RemoteName}/";
     private const string ActiveBranchMarker = "* ";
 
     private readonly GitCliWrapper _gitCliWrapper;
@@ -30,7 +31,7 @@ public sealed class GitFlows
 
     public async Task CheckoutBranchAsync(string remoteBranch)
     {
-        var localBranch = remoteBranch.Replace(OriginPrefix, string.Empty);
+        var localBranch = RemoveRemotePrefixFromRemoteBranch(remoteBranch);
 
         await RunAsync("checkout", "-b", localBranch, remoteBranch);
     }
@@ -40,9 +41,16 @@ public sealed class GitFlows
         await RunAsync("checkout", "-b", localBranch);
     }
 
-    public async Task DeleteBranchAsync(string localBranch)
+    public async Task DeleteLocalBranchAsync(string localBranch)
     {
         await RunAsync("branch", "-D", localBranch);
+    }
+
+    public async Task DeleteRemoteBranchAsync(string remoteBranch)
+    {
+        var remoteBranchWithoutPrefix = RemoveRemotePrefixFromRemoteBranch(remoteBranch);
+
+        await RunAsync("push", RemoteName, "--delete", remoteBranchWithoutPrefix);
     }
 
     public async Task<IEnumerable<string>> GetLocalBranchesAsync()
@@ -83,4 +91,6 @@ public sealed class GitFlows
             .Select(b => b.Trim())
             .Order();
     }
+
+    private static string RemoveRemotePrefixFromRemoteBranch(string remoteBranch) => remoteBranch.Replace(RemotePrefix, string.Empty);
 }

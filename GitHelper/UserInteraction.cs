@@ -23,12 +23,13 @@ public class UserInteraction
 
     public async Task RunAsync()
     {
-        const string fetchAndPull   = "Fetch & Pull";
-        const string switchBranch   = "Switch Branch";
-        const string checkoutBranch = "Checkout Branch";
-        const string createBranch   = "Create Branch";
-        const string deleteBranch   = "Delete Branch (locally)";
-        const string quit           = "Quit";
+        const string fetchAndPull       = "Fetch & Pull";
+        const string switchBranch       = "Switch Branch";
+        const string checkoutBranch     = "Checkout Branch";
+        const string createBranch       = "Create Branch";
+        const string deleteLocalBranch  = "Delete Branch (local)";
+        const string deleteRemoteBranch = "Delete Branch (remote)";
+        const string quit               = "Quit";
 
         var userSelection = Prompt.Select(
             "Select your action",
@@ -38,7 +39,8 @@ public class UserInteraction
                 switchBranch,
                 checkoutBranch,
                 createBranch,
-                deleteBranch,
+                deleteLocalBranch,
+                deleteRemoteBranch,
                 quit
             });
 
@@ -60,8 +62,12 @@ public class UserInteraction
                 await CreateBranchAsync();
                 break;
 
-            case deleteBranch:
-                await DeleteBranchAsync();
+            case deleteLocalBranch:
+                await DeleteLocalBranchAsync();
+                break;
+
+            case deleteRemoteBranch:
+                await DeleteRemoteBranchAsync();
                 break;
         }
 
@@ -94,10 +100,16 @@ public class UserInteraction
         await _gitFlows.CreateBranchAsync(name);
     }
 
-    private async Task DeleteBranchAsync()
+    private async Task DeleteLocalBranchAsync()
     {
         var name = await AskUserToSelectLocalBranchAsync();
-        await _gitFlows.DeleteBranchAsync(name);
+        await _gitFlows.DeleteLocalBranchAsync(name);
+    }
+
+    private async Task DeleteRemoteBranchAsync()
+    {
+        var name = await AskUserToSelectRemoteBranchAsync();
+        await _gitFlows.DeleteRemoteBranchAsync(name);
     }
 
     private async Task<string> AskUserToSelectLocalBranchAsync()
