@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Buffered;
@@ -17,10 +18,17 @@ namespace GitHelper
 
         public async Task<GitCliResult> RunAsync(params string[] arguments)
         {
-            var libraryResult = await RunWithCliWrap(arguments);
-            var internalResult = CreateResult(arguments, libraryResult);
+            try
+            {
+                var libraryResult = await RunWithCliWrap(arguments);
+                var internalResult = CreateResult(arguments, libraryResult);
 
-            return internalResult;
+                return internalResult;
+            }
+            catch (Exception e)
+            {
+                return CreateResult(arguments, e);
+            }
         }
 
         private Task<BufferedCommandResult> RunWithCliWrap(IEnumerable<string> arguments)
@@ -37,10 +45,23 @@ namespace GitHelper
             return new GitCliResult
             {
                 IsSuccess = result.ExitCode == 0,
-                Command = $"{GitExecutable} {string.Join(' ', arguments)}",
+                Command = FormatArguments(arguments),
                 StandardOutput = result.StandardOutput,
                 ErrorOutput = result.StandardError
             };
         }
+
+        private static GitCliResult CreateResult(string[] arguments, Exception exception)
+        {
+            return new GitCliResult
+            {
+                IsSuccess = false,
+                Command = FormatArguments(arguments),
+                StandardOutput = string.Empty,
+                ErrorOutput = exception.Message
+            };
+        }
+
+        private static string FormatArguments(string[] arguments) => $"{GitExecutable} {string.Join(' ', arguments)}";
     }
 }
