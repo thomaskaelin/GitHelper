@@ -20,8 +20,8 @@ public sealed class GitFlows
 
     public async Task FetchAndPullAsync()
     {
-        await RunAsync("fetch", "--tags", "--force");
-        await RunAsync("pull");
+        await RunAsync("fetch", RemoteName, "--prune", "--tags", "--force");
+        await RunAsync("pull", RemoteName);
     }
 
     public async Task SwitchBranchAsync(string localBranch)
