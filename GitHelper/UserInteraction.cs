@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Sharprompt;
@@ -112,18 +114,28 @@ public class UserInteraction
         await _gitFlows.DeleteRemoteBranchAsync(name);
     }
 
-    private async Task<string> AskUserToSelectLocalBranchAsync()
-    {
-        var branches = await _gitFlows.GetLocalBranchesAsync();
-        var userSelection = Prompt.Select("Select branch", branches);
+    private Task<string> AskUserToSelectLocalBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetLocalBranchesAsync);
 
-        return userSelection;
-    }
+    private Task<string> AskUserToSelectRemoteBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetRemoteBranchesAsync);
 
-    private async Task<string> AskUserToSelectRemoteBranchAsync()
+    private static async Task<string> AskUserToSelectBranchAsync(Func<Task<IEnumerable<string>>> getBranchesAsync)
     {
-        var branches = await _gitFlows.GetRemoteBranchesAsync();
-        var userSelection = Prompt.Select("Select branch", branches);
+        string userSelection = null;
+
+        var branchesAsEnumerable = await getBranchesAsync();
+        var branchesAsArray = branchesAsEnumerable.ToArray();
+
+        do
+        {
+            try
+            {
+                userSelection = Prompt.Select("Select branch", branchesAsArray);
+            }
+            catch
+            {
+                // handle empty selection by user
+            }
+        } while (!branchesAsArray.Contains(userSelection));
 
         return userSelection;
     }
