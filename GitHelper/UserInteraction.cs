@@ -3,19 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Sharprompt;
+using Spectre.Console;
 
 namespace GitHelper;
 
 public class UserInteraction
 {
+    private static readonly Encoding ConsoleEncoding = Encoding.UTF8;
+    private static readonly Style UserInputStyle = new(foreground: Color.Red1);
     private readonly GitFlows _gitFlows;
 
     static UserInteraction()
     {
-        Console.OutputEncoding = Encoding.UTF8;
-        Prompt.ColorSchema.Answer = ConsoleColor.DarkRed;
-        Prompt.ColorSchema.Select = ConsoleColor.DarkRed;
+        Console.InputEncoding = ConsoleEncoding;
+        Console.OutputEncoding = ConsoleEncoding;
     }
 
     public UserInteraction(GitFlows gitFlows)
@@ -33,7 +34,7 @@ public class UserInteraction
         const string deleteRemoteBranch = "Delete Branch (remote)";
         const string quit               = "Quit";
 
-        var userSelection = Prompt.Select(
+        var userSelection = ShowSelectionPrompt(
             "Select your action",
             new[]
             {
@@ -98,7 +99,7 @@ public class UserInteraction
 
     private async Task CreateBranchAsync()
     {
-        var name = Prompt.Input<string>("Name of the branch");
+        var name = ShowInputPrompt("Name of the branch");
         await _gitFlows.CreateBranchAsync(name);
     }
 
@@ -129,7 +130,7 @@ public class UserInteraction
         {
             try
             {
-                userSelection = Prompt.Select("Select branch", branchesAsArray);
+                userSelection = ShowSelectionPrompt("Select branch", branchesAsArray);
             }
             catch
             {
@@ -138,5 +139,23 @@ public class UserInteraction
         } while (!branchesAsArray.Contains(userSelection));
 
         return userSelection;
+    }
+
+    private static string ShowInputPrompt(string title)
+    {
+        return AnsiConsole.Prompt(
+            new TextPrompt<string>(title)
+                .PromptStyle(UserInputStyle));
+    }
+
+    private static string ShowSelectionPrompt(string title, string[] choices)
+    {
+        return AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title(title)
+                .AddChoices(choices)
+                .PageSize(20)
+                .WrapAround()
+                .HighlightStyle(UserInputStyle));
     }
 }
