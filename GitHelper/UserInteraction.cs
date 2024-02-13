@@ -12,6 +12,7 @@ public class UserInteraction
     private static readonly Encoding ConsoleEncoding = Encoding.UTF8;
     private static readonly Style UserInputStyle = new(foreground: Color.Red1);
     private readonly GitFlows _gitFlows;
+    private readonly Dictionary<string, Func<Task>> _actions;
 
     static UserInteraction()
     {
@@ -22,59 +23,26 @@ public class UserInteraction
     public UserInteraction(GitFlows gitFlows)
     {
         _gitFlows = gitFlows;
+        _actions = new Dictionary<string, Func<Task>>
+        {
+            { "Fetch & Pull", FetchAndPullAsync },
+            { "Switch Branch", SwitchBranchAsync },
+            { "Checkout Branch", CheckoutBranchAsync },
+            { "Create Branch", CreateBranchAsync },
+            { "Delete Branch (local)", DeleteLocalBranchAsync },
+            { "Delete Branch (remote)", DeleteRemoteBranchAsync },
+            { "Quit", () => Task.CompletedTask }
+        };
     }
 
     public async Task RunAsync()
     {
-        const string fetchAndPull       = "Fetch & Pull";
-        const string switchBranch       = "Switch Branch";
-        const string checkoutBranch     = "Checkout Branch";
-        const string createBranch       = "Create Branch";
-        const string deleteLocalBranch  = "Delete Branch (local)";
-        const string deleteRemoteBranch = "Delete Branch (remote)";
-        const string quit               = "Quit";
+        var actionNames = _actions.Keys.ToArray();
+        var userSelection = ShowSelectionPrompt("Select your action", actionNames);
 
-        var userSelection = ShowSelectionPrompt(
-            "Select your action",
-            new[]
-            {
-                fetchAndPull,
-                switchBranch,
-                checkoutBranch,
-                createBranch,
-                deleteLocalBranch,
-                deleteRemoteBranch,
-                quit
-            });
+        await _actions[userSelection]();
 
-        switch (userSelection)
-        {
-            case fetchAndPull:
-                await FetchAndPullAsync();
-                break;
-
-            case switchBranch:
-                await SwitchBranchAsync();
-                break;
-
-            case checkoutBranch:
-                await CheckoutBranchAsync();
-                break;
-
-            case createBranch:
-                await CreateBranchAsync();
-                break;
-
-            case deleteLocalBranch:
-                await DeleteLocalBranchAsync();
-                break;
-
-            case deleteRemoteBranch:
-                await DeleteRemoteBranchAsync();
-                break;
-        }
-
-        if (userSelection != quit)
+        if (userSelection != actionNames.Last())
         {
             await RunAsync();
         }
