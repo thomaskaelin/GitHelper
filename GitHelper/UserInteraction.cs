@@ -30,7 +30,9 @@ public class UserInteraction
             { "Checkout Branch", CheckoutBranchAsync },
             { "Create Branch", CreateBranchAsync },
             { "Delete Branch (local)", DeleteLocalBranchAsync },
-            { "Delete Branch (remote)", DeleteRemoteBranchAsync }
+            { "Delete Branch (remote)", DeleteRemoteBranchAsync },
+            { "Reset Local Directory", ResetLocalDirectoryAsync },
+            { "Reset & Clean Local Directory", ResetAndCleanLocalDirectoryAsync },
         };
     }
 
@@ -95,6 +97,17 @@ public class UserInteraction
             return;
 
         await _gitFlows.DeleteRemoteBranchAsync(selection.Selection);
+    }
+
+    private async Task ResetLocalDirectoryAsync()
+    {
+        await _gitFlows.ResetLocalDirectory();
+    }
+
+    private async Task ResetAndCleanLocalDirectoryAsync()
+    {
+        await _gitFlows.ResetLocalDirectory();
+        await _gitFlows.CleanLocalDirectory();
     }
 
     private Task<SelectionResult> AskUserToSelectLocalBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetLocalBranchesAsync);

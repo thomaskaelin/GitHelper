@@ -25,7 +25,6 @@ GitHelper.exe -p C:\Repos\MyRepo
 
 ## Possible Improvements
 * Features
-  * Reset local working copy
   * Push commits to remote
 * Replace hardcoded constants with parameters
   * Path to the Git-Executable (see `GitCliWrapper`)

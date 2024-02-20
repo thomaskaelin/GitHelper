@@ -69,6 +69,16 @@ public sealed class GitFlows
         return branches;
     }
 
+    public async Task ResetLocalDirectory()
+    {
+        await RunAsync("reset", "--hard");
+    }
+
+    public async Task CleanLocalDirectory()
+    {
+        await RunAsync("clean", "--force", "-d", "-x");
+    }
+
     private async Task<GitCliResult> RunAsync(bool printOutput, params string[] arguments)
     {
         var cliResult = await _gitCliWrapper.RunAsync(arguments);
