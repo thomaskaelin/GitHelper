@@ -30,22 +30,20 @@ public class UserInteraction
             { "Checkout Branch", CheckoutBranchAsync },
             { "Create Branch", CreateBranchAsync },
             { "Delete Branch (local)", DeleteLocalBranchAsync },
-            { "Delete Branch (remote)", DeleteRemoteBranchAsync },
-            { "Quit", () => Task.CompletedTask }
+            { "Delete Branch (remote)", DeleteRemoteBranchAsync }
         };
     }
 
     public async Task RunAsync()
     {
         var actionNames = _actions.Keys.ToArray();
-        var userSelection = ShowSelectionPrompt("Select your action", actionNames);
+        var userSelection = ShowSelectionPrompt("Select your action", actionNames, "Quit");
 
-        await _actions[userSelection]();
+        if (userSelection.WasCancelled)
+            return;
 
-        if (userSelection != actionNames.Last())
-        {
-            await RunAsync();
-        }
+        await _actions[userSelection.Selection]();
+        await RunAsync();
     }
 
     private async Task FetchAndPullAsync()
@@ -55,14 +53,22 @@ public class UserInteraction
 
     private async Task SwitchBranchAsync()
     {
-        var name = await AskUserToSelectLocalBranchAsync();
-        await _gitFlows.SwitchBranchAsync(name);
+        var selection = await AskUserToSelectLocalBranchAsync();
+
+        if (selection.WasCancelled)
+            return;
+
+        await _gitFlows.SwitchBranchAsync(selection.Selection);
     }
 
     private async Task CheckoutBranchAsync()
     {
-        var name = await AskUserToSelectRemoteBranchAsync();
-        await _gitFlows.CheckoutBranchAsync(name);
+        var selection = await AskUserToSelectRemoteBranchAsync();
+
+        if (selection.WasCancelled)
+            return;
+
+        await _gitFlows.CheckoutBranchAsync(selection.Selection);
     }
 
     private async Task CreateBranchAsync()
@@ -73,40 +79,36 @@ public class UserInteraction
 
     private async Task DeleteLocalBranchAsync()
     {
-        var name = await AskUserToSelectLocalBranchAsync();
-        await _gitFlows.DeleteLocalBranchAsync(name);
+        var selection = await AskUserToSelectLocalBranchAsync();
+
+        if (selection.WasCancelled)
+            return;
+
+        await _gitFlows.DeleteLocalBranchAsync(selection.Selection);
     }
 
     private async Task DeleteRemoteBranchAsync()
     {
-        var name = await AskUserToSelectRemoteBranchAsync();
-        await _gitFlows.DeleteRemoteBranchAsync(name);
+        var selection = await AskUserToSelectRemoteBranchAsync();
+
+        if (selection.WasCancelled)
+            return;
+
+        await _gitFlows.DeleteRemoteBranchAsync(selection.Selection);
     }
 
-    private Task<string> AskUserToSelectLocalBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetLocalBranchesAsync);
+    private Task<SelectionResult> AskUserToSelectLocalBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetLocalBranchesAsync);
 
-    private Task<string> AskUserToSelectRemoteBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetRemoteBranchesAsync);
+    private Task<SelectionResult> AskUserToSelectRemoteBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetRemoteBranchesAsync);
 
-    private static async Task<string> AskUserToSelectBranchAsync(Func<Task<IEnumerable<string>>> getBranchesAsync)
+    private static async Task<SelectionResult> AskUserToSelectBranchAsync(Func<Task<IEnumerable<string>>> getBranchesAsync)
     {
-        string userSelection = null;
 
         var branchesAsEnumerable = await getBranchesAsync();
         var branchesAsArray = branchesAsEnumerable.ToArray();
+        var selectionResult = ShowSelectionPrompt("Select branch", branchesAsArray, "-- cancel --");
 
-        do
-        {
-            try
-            {
-                userSelection = ShowSelectionPrompt("Select branch", branchesAsArray);
-            }
-            catch
-            {
-                // handle empty selection by user
-            }
-        } while (!branchesAsArray.Contains(userSelection));
-
-        return userSelection;
+        return selectionResult;
     }
 
     private static string ShowInputPrompt(string title)
@@ -116,14 +118,31 @@ public class UserInteraction
                 .PromptStyle(UserInputStyle));
     }
 
-    private static string ShowSelectionPrompt(string title, string[] choices)
+    private static SelectionResult ShowSelectionPrompt(string title, string[] choices, string cancelChoice = null)
     {
-        return AnsiConsole.Prompt(
+        if (!string.IsNullOrEmpty(cancelChoice))
+            choices = new List<string>(choices) { cancelChoice }.ToArray();
+
+        var selection = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title(title)
                 .AddChoices(choices)
                 .PageSize(20)
                 .WrapAround()
                 .HighlightStyle(UserInputStyle));
+
+        var selectionResult = new SelectionResult
+        {
+            Selection = selection,
+            WasCancelled = selection == cancelChoice
+        };
+
+        return selectionResult;
+    }
+
+    private class SelectionResult
+    {
+        internal string Selection { get; init; }
+        internal bool WasCancelled { get; init; }
     }
 }
