@@ -9,18 +9,13 @@ namespace GitHelper;
 
 public class UserInteraction
 {
-    private static readonly Encoding ConsoleEncoding = Encoding.UTF8;
-    private static readonly Style UserInputStyle = new(foreground: Color.Red1);
     private readonly GitFlows _gitFlows;
     private readonly Dictionary<string, Func<Task>> _actions;
+    private Style _userInputStyle;
 
-    static UserInteraction()
-    {
-        Console.InputEncoding = ConsoleEncoding;
-        Console.OutputEncoding = ConsoleEncoding;
-    }
-
-    public UserInteraction(GitFlows gitFlows)
+    public UserInteraction(
+        IConsoleConfiguration configuration,
+        GitFlows gitFlows)
     {
         _gitFlows = gitFlows;
         _actions = new Dictionary<string, Func<Task>>
@@ -34,7 +29,12 @@ public class UserInteraction
             { "Reset Local Directory", ResetLocalDirectoryAsync },
             { "Reset & Clean Local Directory", ResetAndCleanLocalDirectoryAsync },
         };
+
+        InitializeConsoleEncoding(configuration);
+        InitializeConsoleStyle(configuration);
     }
+
+    public static void ShowError(string message) => AnsiConsole.Markup($"[red]{message}[/]");
 
     public async Task RunAsync()
     {
@@ -46,6 +46,22 @@ public class UserInteraction
 
         await _actions[userSelection.Selection]();
         await RunAsync();
+    }
+
+    private static void InitializeConsoleEncoding(IConsoleConfiguration configuration)
+    {
+        var encoding = Encoding.GetEncoding(int.Parse(configuration.EncodingOfConsole));
+
+        Console.InputEncoding = encoding;
+        Console.OutputEncoding = encoding;
+    }
+
+    private void InitializeConsoleStyle(IConsoleConfiguration configuration)
+    {
+        var consoleColor = Enum.Parse<ConsoleColor>(configuration.ColorForConsoleInput, true);
+        var foregroundColor = Color.FromConsoleColor(consoleColor);
+
+        _userInputStyle = new Style(foreground: foregroundColor);
     }
 
     private async Task FetchAndPullAsync()
@@ -110,13 +126,15 @@ public class UserInteraction
         await _gitFlows.CleanLocalDirectory();
     }
 
-    private Task<SelectionResult> AskUserToSelectLocalBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetLocalBranchesAsync);
+    private Task<SelectionResult> AskUserToSelectLocalBranchAsync() =>
+        AskUserToSelectBranchAsync(_gitFlows.GetLocalBranchesAsync);
 
-    private Task<SelectionResult> AskUserToSelectRemoteBranchAsync() => AskUserToSelectBranchAsync(_gitFlows.GetRemoteBranchesAsync);
+    private Task<SelectionResult> AskUserToSelectRemoteBranchAsync() =>
+        AskUserToSelectBranchAsync(_gitFlows.GetRemoteBranchesAsync);
 
-    private static async Task<SelectionResult> AskUserToSelectBranchAsync(Func<Task<IEnumerable<string>>> getBranchesAsync)
+    private async Task<SelectionResult> AskUserToSelectBranchAsync(
+        Func<Task<IEnumerable<string>>> getBranchesAsync)
     {
-
         var branchesAsEnumerable = await getBranchesAsync();
         var branchesAsArray = branchesAsEnumerable.ToArray();
         var selectionResult = ShowSelectionPrompt("Select branch", branchesAsArray, "-- cancel --");
@@ -124,14 +142,14 @@ public class UserInteraction
         return selectionResult;
     }
 
-    private static string ShowInputPrompt(string title)
+    private string ShowInputPrompt(string title)
     {
         return AnsiConsole.Prompt(
             new TextPrompt<string>(title)
-                .PromptStyle(UserInputStyle));
+                .PromptStyle(_userInputStyle));
     }
 
-    private static SelectionResult ShowSelectionPrompt(string title, string[] choices, string cancelChoice = null)
+    private SelectionResult ShowSelectionPrompt(string title, string[] choices, string cancelChoice = null)
     {
         if (!string.IsNullOrEmpty(cancelChoice))
             choices = new List<string>(choices) { cancelChoice }.ToArray();
@@ -142,7 +160,7 @@ public class UserInteraction
                 .AddChoices(choices)
                 .PageSize(20)
                 .WrapAround()
-                .HighlightStyle(UserInputStyle));
+                .HighlightStyle(_userInputStyle));
 
         var selectionResult = new SelectionResult
         {

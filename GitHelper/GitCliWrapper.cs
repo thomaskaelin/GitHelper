@@ -8,11 +8,12 @@ namespace GitHelper
 {
     public sealed class GitCliWrapper
     {
-        private const string GitExecutable = "git";
+        private readonly string _gitExecutable;
         private readonly string _workingDirectory;
 
-        public GitCliWrapper(string workingDirectory)
+        public GitCliWrapper(string gitExecutable, string workingDirectory)
         {
+            _gitExecutable = gitExecutable;
             _workingDirectory = workingDirectory;
         }
 
@@ -34,13 +35,13 @@ namespace GitHelper
         private Task<BufferedCommandResult> RunWithCliWrap(IEnumerable<string> arguments)
         {
             return Cli
-                .Wrap(GitExecutable)
+                .Wrap(_gitExecutable)
                 .WithArguments(arguments)
                 .WithWorkingDirectory(_workingDirectory)
                 .ExecuteBufferedAsync();
         }
 
-        private static GitCliResult CreateResult(string[] arguments, BufferedCommandResult result)
+        private GitCliResult CreateResult(string[] arguments, BufferedCommandResult result)
         {
             return new GitCliResult
             {
@@ -51,7 +52,7 @@ namespace GitHelper
             };
         }
 
-        private static GitCliResult CreateResult(string[] arguments, Exception exception)
+        private GitCliResult CreateResult(string[] arguments, Exception exception)
         {
             return new GitCliResult
             {
@@ -62,6 +63,6 @@ namespace GitHelper
             };
         }
 
-        private static string FormatArguments(string[] arguments) => $"{GitExecutable} {string.Join(' ', arguments)}";
+        private string FormatArguments(string[] arguments) => $"{_gitExecutable} {string.Join(' ', arguments)}";
     }
 }

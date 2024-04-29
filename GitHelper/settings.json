@@ -1,0 +1,7 @@
+﻿{
+  "PathToGitExecutable": "git",
+  "PathToGitRepository": "C:\\Dev\\Repos\\Git\\nest",
+  "NameOfRemoteServer": "origin",
+  "EncodingOfConsole": "65001",
+  "ColorForConsoleInput": "Red"
+}
