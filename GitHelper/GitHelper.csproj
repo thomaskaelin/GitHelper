@@ -16,7 +16,7 @@
       <PackageReference Include="Spectre.Console" Version="0.48.0" />
     </ItemGroup>
     <ItemGroup>
-      <None Update="settings.json">
+      <None Update="settings.json" Condition="Exists('settings.json')">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
