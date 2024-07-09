@@ -6,7 +6,12 @@ GitHelper is a small CLI-tool that I wrote in C# as a coding kata. Its main goal
 
 ## Building the app
 
-Running the script `build.ps1` will create an "all in one"-executable at `build\GitHelper.exe`. 
+Running one of these scripts will create an "all in one"-executable in the `build`-directory. 
+
+| Script      | Target-Platform |
+|-------------|-----------------|
+| `build.ps1` | Windows 64bit   |
+| `build.sh`  | macOS Arm64     |
 
 ## Running the app
 
