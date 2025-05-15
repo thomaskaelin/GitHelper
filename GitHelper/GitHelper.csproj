@@ -11,9 +11,9 @@
         <StartupObject>GitHelper.Program</StartupObject>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="CliWrap" Version="3.6.4" />
+      <PackageReference Include="CliWrap" Version="3.8.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="Spectre.Console" Version="0.48.0" />
+      <PackageReference Include="Spectre.Console" Version="0.50.0" />
     </ItemGroup>
     <ItemGroup>
       <None Update="settings.json" Condition="Exists('settings.json')">

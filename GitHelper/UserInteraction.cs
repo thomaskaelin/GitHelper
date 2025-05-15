@@ -158,6 +158,7 @@ public class UserInteraction
             new SelectionPrompt<string>()
                 .Title(title)
                 .AddChoices(choices)
+                .EnableSearch()
                 .PageSize(20)
                 .WrapAround()
                 .HighlightStyle(_userInputStyle));
